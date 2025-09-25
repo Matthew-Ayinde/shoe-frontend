@@ -1,0 +1,317 @@
+"use client"
+
+import { useState } from "react"
+import { motion } from "framer-motion"
+import { User, Package, Heart, Settings, MapPin, CreditCard, Bell, Shield } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+
+const dummyUser = {
+  name: "John Doe",
+  email: "john.doe@example.com",
+  avatar: "/placeholder.svg?height=80&width=80",
+  memberSince: "January 2023",
+  totalOrders: 12,
+  totalSpent: 2450,
+  loyaltyPoints: 1250,
+}
+
+const recentOrders = [
+  {
+    id: "ORD-001",
+    date: "2024-01-15",
+    status: "Delivered",
+    total: 189.99,
+    items: 2,
+    image: "/nike-air-max-blue-sneaker.jpg",
+  },
+  {
+    id: "ORD-002",
+    date: "2024-01-10",
+    status: "Shipped",
+    total: 249.99,
+    items: 1,
+    image: "/brown-leather-oxford-dress-shoe.jpg",
+  },
+  {
+    id: "ORD-003",
+    date: "2024-01-05",
+    status: "Processing",
+    total: 159.99,
+    items: 1,
+    image: "/placeholder.svg?height=60&width=60",
+  },
+]
+
+const menuItems = [
+  { id: "profile", label: "Profile", icon: User },
+  { id: "orders", label: "Orders", icon: Package },
+  { id: "wishlist", label: "Wishlist", icon: Heart },
+  { id: "addresses", label: "Addresses", icon: MapPin },
+  { id: "payment", label: "Payment Methods", icon: CreditCard },
+  { id: "notifications", label: "Notifications", icon: Bell },
+  { id: "security", label: "Security", icon: Shield },
+  { id: "settings", label: "Settings", icon: Settings },
+]
+
+export default function AccountPage() {
+  const [activeTab, setActiveTab] = useState("profile")
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Delivered":
+        return "bg-green-100 text-green-800"
+      case "Shipped":
+        return "bg-blue-100 text-blue-800"
+      case "Processing":
+        return "bg-yellow-100 text-yellow-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-8"
+        >
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">My Account</h1>
+          <p className="text-gray-600">Manage your account settings and view your order history</p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Sidebar */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="lg:col-span-1"
+          >
+            <Card>
+              <CardHeader className="text-center">
+                <Avatar className="w-20 h-20 mx-auto mb-4">
+                  <AvatarImage src={dummyUser.avatar || "/placeholder.svg"} alt={dummyUser.name} />
+                  <AvatarFallback>
+                    {dummyUser.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </AvatarFallback>
+                </Avatar>
+                <CardTitle className="text-xl">{dummyUser.name}</CardTitle>
+                <CardDescription>{dummyUser.email}</CardDescription>
+                <Badge variant="secondary" className="mt-2">
+                  Member since {dummyUser.memberSince}
+                </Badge>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 mb-6">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Total Orders:</span>
+                    <span className="font-medium">{dummyUser.totalOrders}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Total Spent:</span>
+                    <span className="font-medium">${dummyUser.totalSpent}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Loyalty Points:</span>
+                    <span className="font-medium text-blue-600">{dummyUser.loyaltyPoints}</span>
+                  </div>
+                </div>
+                <Separator className="mb-4" />
+                <nav className="space-y-1">
+                  {menuItems.map((item) => {
+                    const Icon = item.icon
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => setActiveTab(item.id)}
+                        className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                          activeTab === item.id
+                            ? "bg-blue-100 text-blue-700"
+                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 mr-3" />
+                        {item.label}
+                      </button>
+                    )
+                  })}
+                </nav>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Main Content */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="lg:col-span-3"
+          >
+            {activeTab === "profile" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Profile Information</CardTitle>
+                  <CardDescription>Update your personal information and preferences</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                      <input
+                        type="text"
+                        defaultValue="John"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                      <input
+                        type="text"
+                        defaultValue="Doe"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                    <input
+                      type="email"
+                      defaultValue={dummyUser.email}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                    <input
+                      type="tel"
+                      defaultValue="+1 (555) 123-4567"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+                    <input
+                      type="date"
+                      defaultValue="1990-01-01"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <Button className="bg-blue-600 hover:bg-blue-700">Save Changes</Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === "orders" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Order History</CardTitle>
+                  <CardDescription>View and track your recent orders</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {recentOrders.map((order) => (
+                      <motion.div
+                        key={order.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-3">
+                            <img
+                              src={order.image || "/placeholder.svg"}
+                              alt="Order item"
+                              className="w-12 h-12 object-cover rounded-md"
+                            />
+                            <div>
+                              <p className="font-medium text-gray-900">Order {order.id}</p>
+                              <p className="text-sm text-gray-600">{order.date}</p>
+                            </div>
+                          </div>
+                          <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <div className="text-sm text-gray-600">
+                            {order.items} item{order.items > 1 ? "s" : ""} • ${order.total}
+                          </div>
+                          <Button variant="outline" size="sm">
+                            View Details
+                          </Button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === "addresses" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Saved Addresses</CardTitle>
+                  <CardDescription>Manage your shipping and billing addresses</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-medium text-gray-900">Home Address</h3>
+                        <Badge variant="secondary">Default</Badge>
+                      </div>
+                      <p className="text-gray-600 text-sm">
+                        123 Main Street
+                        <br />
+                        Apartment 4B
+                        <br />
+                        New York, NY 10001
+                        <br />
+                        United States
+                      </p>
+                      <div className="flex space-x-2 mt-3">
+                        <Button variant="outline" size="sm">
+                          Edit
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                    <Button variant="outline" className="w-full bg-transparent">
+                      Add New Address
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Add other tab content as needed */}
+            {activeTab !== "profile" && activeTab !== "orders" && activeTab !== "addresses" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{menuItems.find((item) => item.id === activeTab)?.label}</CardTitle>
+                  <CardDescription>This section is coming soon</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600">
+                    The {menuItems.find((item) => item.id === activeTab)?.label.toLowerCase()} section is currently
+                    under development.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </motion.div>
+        </div>
+      </div>
+    </div>
+  )
+}
