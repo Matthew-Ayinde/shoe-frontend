@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { LazyImage } from "@/components/ui/lazy-image"
 import { motion } from "framer-motion"
 import { Heart, ShoppingBag, Star, Eye, Share2, Plus } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
@@ -116,12 +117,14 @@ export function MobileProductCard({
           className="flex items-center space-x-3 p-3 bg-background rounded-lg border border-border/50 hover:border-primary/50 transition-colors"
         >
           <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-            <Image
+            <LazyImage
               src={product.image}
               alt={product.name}
               fill
               className="object-cover"
               sizes="64px"
+              aspectRatio="square"
+              showLoader={false}
             />
             {product.isOnSale && (
               <Badge className="absolute top-1 left-1 text-xs bg-red-500 text-white px-1 py-0">
@@ -166,15 +169,16 @@ export function MobileProductCard({
         <Card className="overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-300">
           {/* Product Image */}
           <div className="relative aspect-square overflow-hidden bg-muted">
-            <Image
+            <LazyImage
               src={images[currentImageIndex]}
               alt={product.name}
               fill
-              className={`object-cover transition-all duration-300 ${
-                isImageLoading ? 'scale-110 blur-sm' : 'scale-100 blur-0'
-              }`}
+              className="object-cover"
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+              aspectRatio="square"
               onLoad={() => setIsImageLoading(false)}
+              priority={false}
+              quality={80}
             />
             
             {/* Badges */}
