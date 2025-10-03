@@ -19,14 +19,47 @@ import {
   Shield,
   ChevronLeft,
   ChevronRight,
+  Maximize2,
+  RotateCw,
+  Zap,
+  Eye,
+  Ruler,
+  Sparkles,
+  Camera,
+  Play,
+  Volume2,
+  VolumeX,
+  FullScreen,
+  Layers,
+  MousePointer,
+  Move3D,
+  Scan,
+  Target,
+  TrendingUp,
+  Users,
+  MessageCircle,
+  ThumbsUp,
+  ThumbsDown,
+  Filter,
+  SortAsc,
+  Grid,
+  List,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
+import { Progress } from "@/components/ui/progress"
+import { Slider } from "@/components/ui/slider"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
+import { AnimatedButton } from "@/components/ui/animated-button"
+import { FloatingCard } from "@/components/ui/floating-card"
+import { ParticleBackground } from "@/components/ui/particle-background"
+import { InventoryTracker } from "@/components/ui/inventory-tracker"
 import { products } from "@/lib/dummy-data"
 
 interface ProductPageProps {
@@ -43,11 +76,75 @@ export default function ProductPage({ params }: ProductPageProps) {
   const [quantity, setQuantity] = useState(1)
   const [isWishlisted, setIsWishlisted] = useState(false)
 
+  // Advanced features state
+  const [is360View, setIs360View] = useState(false)
+  const [isARMode, setIsARMode] = useState(false)
+  const [isZoomed, setIsZoomed] = useState(false)
+  const [zoomLevel, setZoomLevel] = useState(1)
+  const [rotation, setRotation] = useState(0)
+  const [showSizeGuide, setShowSizeGuide] = useState(false)
+  const [showComparison, setShowComparison] = useState(false)
+  const [viewMode, setViewMode] = useState<'gallery' | '360' | 'ar' | 'video'>('gallery')
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [isMuted, setIsMuted] = useState(true)
+
+  // Size recommendation state
+  const [userMeasurements, setUserMeasurements] = useState({
+    footLength: 0,
+    footWidth: 0,
+    archHeight: 0
+  })
+  const [recommendedSize, setRecommendedSize] = useState("")
+  const [sizeConfidence, setSizeConfidence] = useState(0)
+
   if (!product) {
     notFound()
   }
 
   const relatedProducts = products.filter((p) => p.id !== product.id && p.category === product.category).slice(0, 4)
+
+  // Mock 360° images (in real app, these would be actual 360° image sequences)
+  const images360 = Array.from({ length: 36 }, (_, i) => ({
+    src: product.images[0], // In real app, this would be different angles
+    angle: i * 10
+  }))
+
+  // Mock size recommendations based on measurements
+  const getSizeRecommendation = (measurements: typeof userMeasurements) => {
+    if (measurements.footLength === 0) return { size: "", confidence: 0 }
+
+    // Simple size calculation (in real app, this would use ML/AI)
+    const sizeMap = {
+      240: "7", 245: "7.5", 250: "8", 255: "8.5", 260: "9",
+      265: "9.5", 270: "10", 275: "10.5", 280: "11", 285: "11.5"
+    }
+
+    const closestLength = Object.keys(sizeMap).reduce((prev, curr) =>
+      Math.abs(Number(curr) - measurements.footLength) < Math.abs(Number(prev) - measurements.footLength) ? curr : prev
+    )
+
+    const confidence = Math.max(0, 100 - Math.abs(Number(closestLength) - measurements.footLength) * 2)
+
+    return {
+      size: sizeMap[closestLength as keyof typeof sizeMap] || "",
+      confidence: Math.min(confidence, 95)
+    }
+  }
+
+  // Handle size recommendation
+  const handleSizeRecommendation = () => {
+    const recommendation = getSizeRecommendation(userMeasurements)
+    setRecommendedSize(recommendation.size)
+    setSizeConfidence(recommendation.confidence)
+  }
+
+  // Handle 360° view rotation
+  const handle360Rotation = (clientX: number, containerWidth: number) => {
+    const percentage = clientX / containerWidth
+    const newRotation = Math.floor(percentage * 36)
+    setRotation(newRotation)
+    setSelectedImage(newRotation % images360.length)
+  }
 
   const reviews = [
     {
@@ -80,7 +177,13 @@ export default function ProductPage({ params }: ProductPageProps) {
     <div className="min-h-screen bg-background">
       <Navigation />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Background Effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <ParticleBackground particleCount={20} particleColor="oklch(0.45 0.18 250 / 0.1)" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/2 via-transparent to-accent/2" />
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <motion.nav
           initial={{ opacity: 0, y: -10 }}
@@ -99,49 +202,169 @@ export default function ProductPage({ params }: ProductPageProps) {
         </motion.nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Product Images */}
+          {/* Enhanced Product Gallery */}
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
             <div className="space-y-4">
-              {/* Main Image */}
-              <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted/30">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={selectedImage}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="relative w-full h-full"
+              {/* View Mode Selector */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <AnimatedButton
+                    variant={viewMode === 'gallery' ? 'default' : 'outline'}
+                    size="sm"
+                    animation="scale"
+                    onClick={() => setViewMode('gallery')}
                   >
-                    <Image
-                      src={product.images[selectedImage] || "/placeholder.svg"}
-                      alt={`${product.name} - Image ${selectedImage + 1}`}
-                      fill
-                      className="object-cover"
-                      priority
-                    />
-                  </motion.div>
+                    <Grid className="w-4 h-4 mr-2" />
+                    Gallery
+                  </AnimatedButton>
+                  <AnimatedButton
+                    variant={viewMode === '360' ? 'default' : 'outline'}
+                    size="sm"
+                    animation="scale"
+                    onClick={() => setViewMode('360')}
+                  >
+                    <Move3D className="w-4 h-4 mr-2" />
+                    360°
+                  </AnimatedButton>
+                  <AnimatedButton
+                    variant={viewMode === 'ar' ? 'default' : 'outline'}
+                    size="sm"
+                    animation="scale"
+                    onClick={() => setViewMode('ar')}
+                  >
+                    <Scan className="w-4 h-4 mr-2" />
+                    AR Try-On
+                  </AnimatedButton>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <AnimatedButton variant="outline" size="icon" animation="scale">
+                    <Share2 className="w-4 h-4" />
+                  </AnimatedButton>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <AnimatedButton variant="outline" size="icon" animation="scale">
+                        <Maximize2 className="w-4 h-4" />
+                      </AnimatedButton>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl">
+                      <DialogHeader>
+                        <DialogTitle>Product Gallery</DialogTitle>
+                      </DialogHeader>
+                      <div className="aspect-square relative">
+                        <Image
+                          src={product.images[selectedImage] || "/placeholder.svg"}
+                          alt={product.name}
+                          fill
+                          className="object-cover rounded-lg"
+                        />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
+
+              {/* Main Display Area */}
+              <FloatingCard glowEffect className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-muted/20 to-muted/40 backdrop-blur-sm border-border/50">
+                <AnimatePresence mode="wait">
+                  {viewMode === 'gallery' && (
+                    <motion.div
+                      key={`gallery-${selectedImage}`}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 1.05 }}
+                      transition={{ duration: 0.4 }}
+                      className="relative w-full h-full"
+                    >
+                      <Image
+                        src={product.images[selectedImage] || "/placeholder.svg"}
+                        alt={`${product.name} - Image ${selectedImage + 1}`}
+                        fill
+                        className="object-cover"
+                        priority
+                      />
+                    </motion.div>
+                  )}
+
+                  {viewMode === '360' && (
+                    <motion.div
+                      key="360-view"
+                      initial={{ opacity: 0, rotateY: -90 }}
+                      animate={{ opacity: 1, rotateY: 0 }}
+                      exit={{ opacity: 0, rotateY: 90 }}
+                      transition={{ duration: 0.6 }}
+                      className="relative w-full h-full cursor-grab active:cursor-grabbing"
+                      onMouseMove={(e) => {
+                        if (e.buttons === 1) { // Only when dragging
+                          const rect = e.currentTarget.getBoundingClientRect()
+                          handle360Rotation(e.clientX - rect.left, rect.width)
+                        }
+                      }}
+                    >
+                      <Image
+                        src={images360[rotation]?.src || product.images[0]}
+                        alt={`${product.name} - 360° View`}
+                        fill
+                        className="object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <div className="flex items-center justify-between text-white">
+                          <span className="text-sm font-medium">360° View</span>
+                          <span className="text-xs opacity-75">Drag to rotate</span>
+                        </div>
+                        <Progress value={(rotation / 35) * 100} className="mt-2 h-1" />
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {viewMode === 'ar' && (
+                    <motion.div
+                      key="ar-view"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.5 }}
+                      className="relative w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center"
+                    >
+                      <div className="text-center space-y-4">
+                        <div className="w-20 h-20 mx-auto bg-gradient-primary rounded-full flex items-center justify-center animate-pulse">
+                          <Camera className="w-10 h-10 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-foreground">AR Try-On</h3>
+                          <p className="text-sm text-muted-foreground">See how it looks on you</p>
+                        </div>
+                        <AnimatedButton animation="glow" className="bg-gradient-primary">
+                          <Scan className="w-4 h-4 mr-2" />
+                          Start AR Experience
+                        </AnimatedButton>
+                      </div>
+                    </motion.div>
+                  )}
                 </AnimatePresence>
 
-                {/* Navigation Arrows */}
-                {product.images.length > 1 && (
+                {/* Navigation Arrows for Gallery Mode */}
+                {viewMode === 'gallery' && product.images.length > 1 && (
                   <>
-                    <Button
+                    <AnimatedButton
                       variant="ghost"
                       size="icon"
-                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background"
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background backdrop-blur-sm"
                       onClick={() => setSelectedImage((prev) => (prev === 0 ? product.images.length - 1 : prev - 1))}
+                      animation="scale"
                     >
                       <ChevronLeft className="h-5 w-5" />
-                    </Button>
-                    <Button
+                    </AnimatedButton>
+                    <AnimatedButton
                       variant="ghost"
                       size="icon"
-                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background backdrop-blur-sm"
                       onClick={() => setSelectedImage((prev) => (prev === product.images.length - 1 ? 0 : prev + 1))}
+                      animation="scale"
                     >
                       <ChevronRight className="h-5 w-5" />
-                    </Button>
+                    </AnimatedButton>
                   </>
                 )}
 
@@ -331,6 +554,11 @@ export default function ProductPage({ params }: ProductPageProps) {
                     <p className="text-xs text-muted-foreground">1-year coverage</p>
                   </div>
                 </div>
+              </div>
+
+              {/* Real-time Inventory Tracker */}
+              <div className="mt-6">
+                <InventoryTracker productId={product.id} compact={true} />
               </div>
             </div>
           </motion.div>

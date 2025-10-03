@@ -2,17 +2,21 @@
 
 import { motion } from "framer-motion"
 import { useState } from "react"
-import { Search, Package, Truck, CheckCircle, MapPin } from "lucide-react"
+import { Search, Package, Sparkles } from "lucide-react"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { AnimatedButton } from "@/components/ui/animated-button"
+import { FloatingCard } from "@/components/ui/floating-card"
+import { ParticleBackground } from "@/components/ui/particle-background"
+import { OrderTracker } from "@/components/ui/order-tracker"
 
 export default function OrderTrackingPage() {
   const [trackingNumber, setTrackingNumber] = useState("")
   const [orderData, setOrderData] = useState<any>(null)
+  const [isSearching, setIsSearching] = useState(false)
 
   // Mock tracking data
   const mockTrackingData = {
@@ -81,9 +85,13 @@ export default function OrderTrackingPage() {
     ],
   }
 
-  const handleTrackOrder = () => {
+  const handleTrackOrder = async () => {
     if (trackingNumber.trim()) {
+      setIsSearching(true)
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500))
       setOrderData(mockTrackingData)
+      setIsSearching(false)
     }
   }
 
@@ -91,38 +99,52 @@ export default function OrderTrackingPage() {
     <div className="min-h-screen bg-background">
       <Navigation />
 
-      {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-br from-primary/5 via-background to-muted/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Background Effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <ParticleBackground particleCount={25} particleColor="oklch(0.45 0.18 250 / 0.1)" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/2 via-transparent to-accent/2" />
+      </div>
+
+      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Enhanced Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <div className="flex items-center justify-center space-x-3 mb-6">
+            <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center">
+              <Package className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                Track Your Order
+              </h1>
+            </div>
+          </div>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Get real-time updates on your order status and delivery progress
+          </p>
+        </motion.div>
+
+        {/* Enhanced Tracking Form */}
+        {!orderData && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center space-y-4"
+            transition={{ delay: 0.1 }}
+            className="mb-12"
           >
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <Search className="h-8 w-8 text-primary" />
-            </div>
-            <h1 className="text-4xl lg:text-6xl font-bold text-foreground text-balance">Track Your Order</h1>
-            <p className="text-lg text-muted-foreground text-pretty max-w-2xl mx-auto">
-              Enter your order number or tracking number to see the latest status of your shipment
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Tracking Form */}
-      <section className="py-20">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-center text-2xl">Enter Tracking Information</CardTitle>
+            <FloatingCard glowEffect tiltEffect className="max-w-2xl mx-auto">
+              <CardHeader className="text-center">
+                <div className="w-16 h-16 mx-auto bg-gradient-primary rounded-2xl flex items-center justify-center mb-4">
+                  <Search className="w-8 h-8 text-white" />
+                </div>
+                <CardTitle className="text-2xl">Enter Tracking Information</CardTitle>
+                <p className="text-muted-foreground">
+                  Track your order with real-time updates and live delivery tracking
+                </p>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
@@ -131,130 +153,60 @@ export default function OrderTrackingPage() {
                   </label>
                   <Input
                     id="tracking"
-                    placeholder="e.g., SF-2024-001234 or 1Z999AA1234567890"
+                    placeholder="e.g., ORD-12345 or TRK-789456123"
                     value={trackingNumber}
                     onChange={(e) => setTrackingNumber(e.target.value)}
-                    className="text-center"
+                    className="text-center text-lg py-3"
+                    onKeyPress={(e) => e.key === 'Enter' && handleTrackOrder()}
                   />
                 </div>
-                <Button onClick={handleTrackOrder} className="w-full text-lg py-6" disabled={!trackingNumber.trim()}>
-                  <Search className="mr-2 h-5 w-5" />
-                  Track Order
-                </Button>
-                <p className="text-sm text-muted-foreground text-center">
-                  You can find your order number in your confirmation email or account dashboard
-                </p>
+
+                <AnimatedButton
+                  onClick={handleTrackOrder}
+                  className="w-full text-lg py-6 bg-gradient-primary"
+                  disabled={!trackingNumber.trim() || isSearching}
+                  animation="glow"
+                >
+                  {isSearching ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Searching...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <Search className="w-5 h-5" />
+                      <span>Track Order</span>
+                    </div>
+                  )}
+                </AnimatedButton>
+
+                <div className="text-center space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    You can find your order number in your confirmation email
+                  </p>
+                  <div className="flex items-center justify-center space-x-4 text-xs text-muted-foreground">
+                    <span>✓ Real-time updates</span>
+                    <span>✓ Live tracking</span>
+                    <span>✓ Delivery notifications</span>
+                  </div>
+                </div>
               </CardContent>
-            </Card>
+            </FloatingCard>
           </motion.div>
-        </div>
-      </section>
+        )}
 
-      {/* Order Results */}
-      {orderData && (
-        <section className="pb-20">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="space-y-8"
-            >
-              {/* Order Summary */}
-              <Card className="border-0 shadow-lg">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Order {orderData.orderNumber}</CardTitle>
-                    <Badge variant="secondary" className="text-sm">
-                      {orderData.status}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Tracking Number</p>
-                      <p className="font-medium">{orderData.trackingNumber}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Status</p>
-                      <p className="font-medium">{orderData.status}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Estimated Delivery</p>
-                      <p className="font-medium">{orderData.estimatedDelivery}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+        {/* Enhanced Order Results */}
+        {orderData && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <OrderTracker orderId="ORD-12345" showMap={true} />
+          </motion.div>
+        )}
 
-              {/* Order Items */}
-              <Card className="border-0 shadow-lg">
-                <CardHeader>
-                  <CardTitle>Order Items</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {orderData.items.map((item: any, index: number) => (
-                      <div key={index} className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
-                        <div className="w-16 h-16 bg-background rounded-lg overflow-hidden">
-                          <img
-                            src={item.image || "/placeholder.svg"}
-                            alt={item.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium text-foreground">{item.name}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            Size: {item.size} • Color: {item.color} • Qty: {item.quantity}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Tracking Timeline */}
-              <Card className="border-0 shadow-lg">
-                <CardHeader>
-                  <CardTitle>Tracking Timeline</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    {orderData.timeline.map((event: any, index: number) => (
-                      <div key={index} className="flex items-start gap-4">
-                        <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            event.completed ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          <event.icon className="h-5 w-5" />
-                        </div>
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <h4
-                              className={`font-medium ${event.completed ? "text-foreground" : "text-muted-foreground"}`}
-                            >
-                              {event.status}
-                            </h4>
-                            {event.completed && <CheckCircle className="h-4 w-4 text-green-500" />}
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {event.date} at {event.time}
-                          </p>
-                          <p className="text-sm text-muted-foreground">{event.description}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
-        </section>
-      )}
+      </div>
 
       <Footer />
     </div>

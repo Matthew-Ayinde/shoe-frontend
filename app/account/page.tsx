@@ -1,13 +1,44 @@
 "use client"
 
 import { useState } from "react"
-import { motion } from "framer-motion"
-import { User, Package, Heart, Settings, MapPin, CreditCard, Bell, Shield } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+  User,
+  Package,
+  Heart,
+  Settings,
+  MapPin,
+  CreditCard,
+  Bell,
+  Shield,
+  Edit,
+  Eye,
+  Download,
+  Star,
+  Calendar,
+  TrendingUp,
+  Gift,
+  Sparkles,
+  ArrowRight,
+  Plus,
+  Search,
+  Filter,
+  MoreHorizontal
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Progress } from "@/components/ui/progress"
+import { AnimatedButton } from "@/components/ui/animated-button"
+import { FloatingCard } from "@/components/ui/floating-card"
+import { ParticleBackground } from "@/components/ui/particle-background"
+import { Navigation } from "@/components/navigation"
+import { Footer } from "@/components/footer"
 
 const dummyUser = {
   name: "John Doe",
@@ -17,6 +48,15 @@ const dummyUser = {
   totalOrders: 12,
   totalSpent: 2450,
   loyaltyPoints: 1250,
+  tier: "Gold",
+  nextTierPoints: 250,
+  phone: "+1 (555) 123-4567",
+  birthday: "March 15, 1990",
+  preferences: {
+    newsletter: true,
+    smsNotifications: false,
+    orderUpdates: true,
+  }
 }
 
 const recentOrders = [
@@ -58,46 +98,112 @@ const menuItems = [
 ]
 
 export default function AccountPage() {
-  const [activeTab, setActiveTab] = useState("profile")
+  const [activeTab, setActiveTab] = useState("overview")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [orderFilter, setOrderFilter] = useState("all")
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Delivered":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
       case "Shipped":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
       case "Processing":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
     }
   }
 
+  const loyaltyProgress = (dummyUser.loyaltyPoints / (dummyUser.loyaltyPoints + dummyUser.nextTierPoints)) * 100
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background">
+      <Navigation />
+
+      {/* Background Effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <ParticleBackground particleCount={25} particleColor="oklch(0.65 0.12 160 / 0.15)" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/2 via-transparent to-accent/2" />
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Enhanced Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">My Account</h1>
-          <p className="text-gray-600">Manage your account settings and view your order history</p>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center">
+                  <User className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                    My Account
+                  </h1>
+                  <p className="text-muted-foreground">
+                    Welcome back, {dummyUser.name}! Manage your account and orders.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <AnimatedButton variant="outline" animation="magnetic">
+                <Download className="w-4 h-4 mr-2" />
+                Export Data
+              </AnimatedButton>
+
+              <AnimatedButton animation="glow" className="bg-gradient-primary">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Upgrade Tier
+              </AnimatedButton>
+            </div>
+          </div>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="lg:col-span-1"
-          >
-            <Card>
-              <CardHeader className="text-center">
-                <Avatar className="w-20 h-20 mx-auto mb-4">
-                  <AvatarImage src={dummyUser.avatar || "/placeholder.svg"} alt={dummyUser.name} />
+        {/* Navigation Tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:grid-cols-none lg:inline-flex">
+              <TabsTrigger value="overview" className="flex items-center space-x-2">
+                <User className="w-4 h-4" />
+                <span>Overview</span>
+              </TabsTrigger>
+              <TabsTrigger value="orders" className="flex items-center space-x-2">
+                <Package className="w-4 h-4" />
+                <span>Orders</span>
+              </TabsTrigger>
+              <TabsTrigger value="wishlist" className="flex items-center space-x-2">
+                <Heart className="w-4 h-4" />
+                <span>Wishlist</span>
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="flex items-center space-x-2">
+                <Settings className="w-4 h-4" />
+                <span>Settings</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="space-y-8 mt-8">
+              {/* User Profile Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <FloatingCard glowEffect tiltEffect className="p-6 bg-gradient-to-br from-primary/5 to-accent/5 backdrop-blur-sm border-border/50">
+                  <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6">
+                    <div className="relative">
+                      <Avatar className="w-24 h-24 border-4 border-primary/20">
+                        <AvatarImage src={dummyUser.avatar || "/placeholder.svg"} alt={dummyUser.name} />
                   <AvatarFallback>
                     {dummyUser.name
                       .split(" ")
@@ -309,9 +415,12 @@ export default function AccountPage() {
                 </CardContent>
               </Card>
             )}
-          </motion.div>
-        </div>
+            </TabsContent>
+          </Tabs>
+        </motion.div>
       </div>
+
+      <Footer />
     </div>
   )
 }

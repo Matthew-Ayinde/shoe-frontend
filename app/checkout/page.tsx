@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft, CreditCard, Truck, Shield, Check } from "lucide-react"
+import { ArrowLeft, CreditCard, Truck, Shield, Check, MapPin, User, Mail, Phone, Lock, Sparkles, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -15,6 +15,11 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
+import { AnimatedButton } from "@/components/ui/animated-button"
+import { FloatingCard } from "@/components/ui/floating-card"
+import { ParticleBackground } from "@/components/ui/particle-background"
+import { PaymentMethods } from "@/components/ui/payment-methods"
+import { useCart } from "@/lib/cart-context"
 
 interface CartItem {
   id: string
@@ -29,36 +34,35 @@ interface CartItem {
 
 export default function CheckoutPage() {
   const [currentStep, setCurrentStep] = useState(1)
-  const [paymentMethod, setPaymentMethod] = useState("card")
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false)
 
-  // Mock cart items
-  const cartItems: CartItem[] = [
-    {
-      id: "cart-1",
-      name: "Air Max Revolution",
-      brand: "Nike",
-      price: 129.99,
-      image: "/nike-air-max-blue-sneaker.jpg",
-      size: "9",
-      color: "Blue",
-      quantity: 1,
-    },
-    {
-      id: "cart-2",
-      name: "Ultra Boost Runner",
-      brand: "Adidas",
-      price: 149.99,
-      image: "/adidas-ultraboost-white-running-shoe.jpg",
-      size: "8.5",
-      color: "White",
-      quantity: 2,
-    },
-  ]
+  const { state: cartState, clearCart } = useCart()
+  const cartItems = cartState.items
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const shipping = 0 // Free shipping
+  const subtotal = cartState.total
+  const shipping = subtotal > 75 ? 0 : 9.99 // Free shipping over $75
   const tax = subtotal * 0.08
   const total = subtotal + shipping + tax
+
+  const handlePaymentSubmit = async (paymentData: any) => {
+    setIsProcessingPayment(true)
+
+    try {
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 3000))
+
+      // Clear cart on successful payment
+      clearCart()
+
+      // Move to confirmation step
+      setCurrentStep(3)
+
+    } catch (error) {
+      console.error('Payment failed:', error)
+    } finally {
+      setIsProcessingPayment(false)
+    }
+  }
 
   const steps = [
     { id: 1, name: "Shipping", completed: currentStep > 1 },
@@ -70,44 +74,106 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-background">
       <Navigation />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Background Effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <ParticleBackground particleCount={25} particleColor="oklch(0.45 0.18 250 / 0.2)" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-accent/3" />
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            <Button variant="ghost" size="icon" asChild>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="flex items-center gap-4 mb-6">
+            <AnimatedButton variant="ghost" size="icon" animation="magnetic" asChild>
               <Link href="/cart">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
-            </Button>
-            <h1 className="text-3xl font-bold text-foreground">Checkout</h1>
+            </AnimatedButton>
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center">
+                <CreditCard className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                Secure Checkout
+              </h1>
+            </div>
           </div>
 
           {/* Progress Steps */}
-          <div className="flex items-center gap-4">
-            {steps.map((step, index) => (
-              <div key={step.id} className="flex items-center">
-                <div
-                  className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition-colors ${
-                    step.completed
-                      ? "bg-primary border-primary text-primary-foreground"
-                      : currentStep === step.id
-                        ? "border-primary text-primary"
-                        : "border-muted-foreground text-muted-foreground"
-                  }`}
-                >
-                  {step.completed ? <Check className="h-4 w-4" /> : step.id}
+          <FloatingCard className="p-6 bg-card/50 backdrop-blur-sm border-border/50">
+            <div className="flex items-center justify-between">
+              {steps.map((step, index) => (
+                <div key={step.id} className="flex items-center flex-1">
+                  <motion.div
+                    className="flex items-center"
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <motion.div
+                      className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-300 ${
+                        step.completed
+                          ? "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/25"
+                          : currentStep === step.id
+                            ? "border-primary text-primary bg-primary/10 shadow-lg shadow-primary/25"
+                            : "border-muted-foreground/30 text-muted-foreground bg-muted/20"
+                      }`}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      {step.completed ? (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        >
+                          <Check className="h-5 w-5" />
+                        </motion.div>
+                      ) : (
+                        <span className="font-semibold">{step.id}</span>
+                      )}
+                    </motion.div>
+                    <div className="ml-3">
+                      <span
+                        className={`text-sm font-medium transition-colors ${
+                          currentStep === step.id ? "text-foreground" : "text-muted-foreground"
+                        }`}
+                      >
+                        {step.name}
+                      </span>
+                      {currentStep === step.id && (
+                        <motion.div
+                          className="h-0.5 bg-gradient-primary rounded-full mt-1"
+                          initial={{ width: 0 }}
+                          animate={{ width: "100%" }}
+                          transition={{ duration: 0.5 }}
+                        />
+                      )}
+                    </div>
+                  </motion.div>
+
+                  {index < steps.length - 1 && (
+                    <div className="flex-1 mx-4">
+                      <div className="relative h-0.5 bg-muted rounded-full overflow-hidden">
+                        <motion.div
+                          className="absolute inset-y-0 left-0 bg-gradient-primary rounded-full"
+                          initial={{ width: "0%" }}
+                          animate={{
+                            width: step.completed ? "100%" : currentStep > step.id ? "100%" : "0%"
+                          }}
+                          transition={{ duration: 0.8, delay: 0.2 }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <span
-                  className={`ml-2 text-sm font-medium ${
-                    currentStep === step.id ? "text-foreground" : "text-muted-foreground"
-                  }`}
-                >
-                  {step.name}
-                </span>
-                {index < steps.length - 1 && <div className="w-12 h-px bg-border mx-4" />}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </FloatingCard>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -213,78 +279,23 @@ export default function CheckoutPage() {
 
             {currentStep === 2 && (
               <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Payment Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <Tabs value={paymentMethod} onValueChange={setPaymentMethod}>
-                      <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="card">Credit Card</TabsTrigger>
-                        <TabsTrigger value="paypal">PayPal</TabsTrigger>
-                        <TabsTrigger value="apple">Apple Pay</TabsTrigger>
-                      </TabsList>
+                <PaymentMethods
+                  total={total}
+                  onPaymentSubmit={handlePaymentSubmit}
+                  isProcessing={isProcessingPayment}
+                />
 
-                      <TabsContent value="card" className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="cardNumber">Card Number</Label>
-                          <Input id="cardNumber" placeholder="1234 5678 9012 3456" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="expiry">Expiry Date</Label>
-                            <Input id="expiry" placeholder="MM/YY" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="cvv">CVV</Label>
-                            <Input id="cvv" placeholder="123" />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="cardName">Name on Card</Label>
-                          <Input id="cardName" placeholder="John Doe" />
-                        </div>
-                      </TabsContent>
-
-                      <TabsContent value="paypal" className="space-y-4">
-                        <div className="text-center py-8">
-                          <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                            <CreditCard className="h-8 w-8 text-blue-600" />
-                          </div>
-                          <p className="text-muted-foreground">
-                            You'll be redirected to PayPal to complete your payment.
-                          </p>
-                        </div>
-                      </TabsContent>
-
-                      <TabsContent value="apple" className="space-y-4">
-                        <div className="text-center py-8">
-                          <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                            <CreditCard className="h-8 w-8 text-gray-600" />
-                          </div>
-                          <p className="text-muted-foreground">Use Touch ID or Face ID to pay with Apple Pay.</p>
-                        </div>
-                      </TabsContent>
-                    </Tabs>
-
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Billing Address</h3>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="sameAsShipping" defaultChecked />
-                        <Label htmlFor="sameAsShipping">Same as shipping address</Label>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <Button variant="outline" onClick={() => setCurrentStep(1)} className="flex-1 bg-transparent">
-                        Back to Shipping
-                      </Button>
-                      <Button onClick={() => setCurrentStep(3)} className="flex-1">
-                        Review Order
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="mt-6 flex gap-4">
+                  <AnimatedButton
+                    variant="outline"
+                    onClick={() => setCurrentStep(1)}
+                    className="flex-1"
+                    animation="scale"
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Shipping
+                  </AnimatedButton>
+                </div>
               </motion.div>
             )}
 

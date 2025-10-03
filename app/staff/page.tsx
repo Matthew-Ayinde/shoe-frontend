@@ -1,19 +1,86 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { ShoppingCart, Package, Users, Clock, CheckCircle, AlertCircle, Eye, MoreHorizontal } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  ShoppingCart,
+  Package,
+  Users,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Eye,
+  MoreHorizontal,
+  Search,
+  Filter,
+  RefreshCw,
+  Bell,
+  Calendar,
+  TrendingUp,
+  Zap,
+  Target,
+  Activity,
+  Sparkles,
+  ArrowRight,
+  Plus,
+  Edit,
+  Trash2,
+  MessageSquare,
+  Phone,
+  Mail
+} from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { AnimatedButton } from "@/components/ui/animated-button"
+import { FloatingCard } from "@/components/ui/floating-card"
+import { ParticleBackground } from "@/components/ui/particle-background"
+import { Navigation } from "@/components/navigation"
+import { Footer } from "@/components/footer"
 
 const todayStats = [
-  { title: "Orders to Process", value: 12, icon: ShoppingCart, color: "text-blue-500" },
-  { title: "Low Stock Items", value: 8, icon: Package, color: "text-yellow-500" },
-  { title: "Customer Inquiries", value: 5, icon: Users, color: "text-green-500" },
-  { title: "Pending Tasks", value: 3, icon: Clock, color: "text-purple-500" },
+  {
+    title: "Orders to Process",
+    value: 12,
+    icon: ShoppingCart,
+    color: "text-blue-500",
+    gradient: "from-blue-500 to-cyan-600",
+    bgGradient: "from-blue-500/10 to-cyan-600/10",
+    change: "+3 from yesterday"
+  },
+  {
+    title: "Low Stock Items",
+    value: 8,
+    icon: Package,
+    color: "text-yellow-500",
+    gradient: "from-yellow-500 to-orange-600",
+    bgGradient: "from-yellow-500/10 to-orange-600/10",
+    change: "+2 new alerts"
+  },
+  {
+    title: "Customer Inquiries",
+    value: 5,
+    icon: Users,
+    color: "text-green-500",
+    gradient: "from-green-500 to-emerald-600",
+    bgGradient: "from-green-500/10 to-emerald-600/10",
+    change: "-1 from yesterday"
+  },
+  {
+    title: "Pending Tasks",
+    value: 3,
+    icon: Clock,
+    color: "text-purple-500",
+    gradient: "from-purple-500 to-violet-600",
+    bgGradient: "from-purple-500/10 to-violet-600/10",
+    change: "2 due today"
+  },
 ]
 
 const recentOrders = [
@@ -45,6 +112,18 @@ const lowStockItems = [
 ]
 
 export default function StaffDashboard() {
+  const [activeTab, setActiveTab] = useState("overview")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterStatus, setFilterStatus] = useState("all")
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    setIsRefreshing(false)
+  }
+
   const getStatusColor = (status) => {
     switch (status) {
       case "completed":
@@ -73,41 +152,127 @@ export default function StaffDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Staff Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back! Here's what needs your attention today.</p>
-        </div>
-        <div className="text-right">
-          <p className="text-sm text-muted-foreground">Today</p>
-          <p className="text-lg font-semibold">{new Date().toLocaleDateString()}</p>
-        </div>
+    <div className="min-h-screen bg-background">
+      <Navigation />
+
+      {/* Background Effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <ParticleBackground particleCount={20} particleColor="oklch(0.55 0.15 280 / 0.15)" />
+        <div className="absolute inset-0 bg-gradient-to-br from-accent/3 via-transparent to-primary/3" />
       </div>
 
-      {/* Today's Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {todayStats.map((stat, index) => (
-          <motion.div
-            key={stat.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: index * 0.1 }}
-          >
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-                <stat.icon className={`h-4 w-4 ${stat.color}`} />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">Requires attention</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Enhanced Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6"
+        >
+          <div className="space-y-2">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gradient-accent rounded-2xl flex items-center justify-center">
+                <Activity className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                  Staff Dashboard
+                </h1>
+                <p className="text-muted-foreground">
+                  Welcome back! Here's what needs your attention today.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Today</p>
+              <p className="text-lg font-semibold text-foreground">{new Date().toLocaleDateString()}</p>
+            </div>
+
+            <AnimatedButton
+              variant="outline"
+              size="icon"
+              animation="scale"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </AnimatedButton>
+
+            <AnimatedButton variant="outline" animation="magnetic">
+              <Calendar className="w-4 h-4 mr-2" />
+              Schedule
+            </AnimatedButton>
+
+            <AnimatedButton animation="glow" className="bg-gradient-accent">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Quick Actions
+            </AnimatedButton>
+          </div>
+        </motion.div>
+
+        {/* Navigation Tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:grid-cols-none lg:inline-flex">
+              <TabsTrigger value="overview" className="flex items-center space-x-2">
+                <Activity className="w-4 h-4" />
+                <span>Overview</span>
+              </TabsTrigger>
+              <TabsTrigger value="orders" className="flex items-center space-x-2">
+                <ShoppingCart className="w-4 h-4" />
+                <span>Orders</span>
+              </TabsTrigger>
+              <TabsTrigger value="inventory" className="flex items-center space-x-2">
+                <Package className="w-4 h-4" />
+                <span>Inventory</span>
+              </TabsTrigger>
+              <TabsTrigger value="tasks" className="flex items-center space-x-2">
+                <Clock className="w-4 h-4" />
+                <span>Tasks</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="space-y-8 mt-8">
+
+              {/* Enhanced Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {todayStats.map((stat, index) => (
+                  <motion.div
+                    key={stat.title}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                  >
+                    <FloatingCard
+                      glowEffect
+                      tiltEffect
+                      className={`relative overflow-hidden bg-gradient-to-br ${stat.bgGradient} backdrop-blur-sm border-border/50`}
+                    >
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                          {stat.title}
+                        </CardTitle>
+                        <div className={`p-2 rounded-lg bg-gradient-to-r ${stat.gradient}`}>
+                          <stat.icon className="h-4 w-4 text-white" />
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-foreground mb-2">{stat.value}</div>
+                        <p className="text-xs text-muted-foreground">{stat.change}</p>
+                      </CardContent>
+
+                      {/* Animated background effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                    </FloatingCard>
+                  </motion.div>
+                ))}
+              </div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -302,6 +467,12 @@ export default function StaffDashboard() {
           </CardContent>
         </Card>
       </motion.div>
+            </TabsContent>
+          </Tabs>
+        </motion.div>
+      </div>
+
+      <Footer />
     </div>
   )
 }
